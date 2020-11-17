@@ -75,13 +75,13 @@ function load_mailbox(mailbox) {
       const a = document.createElement('a');
       a.href = '#';
       a.addEventListener('click', () => {
-        load_email(email.id);
+        load_email(email.id, mailbox);
       });
 
       if(email.read === false)
         a.className = 'list-group-item list-group-item-action';
       else
-        a.className = 'list-group-item list-group-item-action disabled';
+        a.className = 'list-group-item list-group-item-action list-group-item-dark';
 
       a.innerHTML = `
       <div class="container">
@@ -90,7 +90,9 @@ function load_mailbox(mailbox) {
             ${email.sender}
           </div>
           <div class="col">
-            ${email.subject}
+            <div class="d-flex justify-content-center">
+              ${email.subject}
+            </div>
           </div>
           <div class="col">
             <div class="d-flex justify-content-end">
@@ -106,7 +108,19 @@ function load_mailbox(mailbox) {
   });
 }
 
-function load_email(email_id) {
+function load_email(email_id, mailbox) {
+  // First, it marks the e-mail given as 'read'
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        read: true
+    })
+  })
+
+  // Next, clean any mail that is appended to the 'email-view' div
+  if (document.querySelector('.card') != null)
+    document.querySelector('.card').remove();
+
   // Show the mailbox and hide other views
   document.querySelector('#email-view').style.display = 'block';
   document.querySelector('#emails-view').style.display = 'none';
@@ -114,26 +128,37 @@ function load_email(email_id) {
   fetch(`/emails/${email_id}`)
   .then(response => response.json())
   .then(email => {
-    console.log(email);
-
-    // Creating card
+    
+    // Creating card that is gonna contain the e-mail
     const card_div = document.createElement('div');
     card_div.className = 'card';
 
+    // Creating e-mail that belong to either received or archived mailbox
+
+    // The code below gets confusing because of the "excessive" use of ternary operator to check if e-mail
+    // belongs to the sent mailbox or not, to create the Archive button or not
     card_div.innerHTML = `
-      <div class="card-header">
-        ${email.subject}
-      </div>
-      <div class="card-body">
-        <p class="card-text"><strong>From: </strong>${email.sender}</p>
-        <p class="card-text"><small class="text-muted">${email.timestamp}</small></p>
-        <p class="card-text"><strong>To: </strong>${email.recipients}</p>
-        <hr>
-        <p class="card-text">${email.body}</p>
-      </div>
-    `
-    console.log(email.body);
+    <div class="card-header">
+      ${email.subject}
+    </div>
+    <div class="card-body">
+      <p class="card-text"><strong>From: </strong>${email.sender}</p>
+      <p class="card-text"><small class="text-muted">${email.timestamp}</small></p>
+      <p class="card-text"><strong>To: </strong>${email.recipients}</p>
+      <hr>
+      <p class="card-text">${email.body}</p>`
+        + (mailbox === 'sent' ? 
+    `</div>`
+        : (email.archive ? 
+    ` <a href="#" id="unarchive-btn" class="btn btn-outline-warning">Unarchive</a>
+    </div>
+    `   : 
+    ` <a href="#" id="archive-btn" class="btn btn-outline-warning">Archive</a>
+    </div>`
+        ));
+    
     document.querySelector('#email-view').append(card_div);
 
+    // Adding event listener to Archive button
   });
 }
