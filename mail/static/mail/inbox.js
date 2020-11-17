@@ -109,16 +109,16 @@ function load_mailbox(mailbox) {
 }
 
 function load_email(email_id, mailbox) {
-  // First, it marks the e-mail given as 'read'
+  // First, it marks the given e-mail as 'read'
   fetch(`/emails/${email_id}`, {
     method: 'PUT',
     body: JSON.stringify({
         read: true
     })
-  })
+  });
 
   // Next, clean any mail that is appended to the 'email-view' div
-  if (document.querySelector('.card') != null)
+  if(document.querySelector('.card') != null)
     document.querySelector('.card').remove();
 
   // Show the mailbox and hide other views
@@ -134,31 +134,47 @@ function load_email(email_id, mailbox) {
     card_div.className = 'card';
 
     // Creating e-mail that belong to either received or archived mailbox
-
-    // The code below gets confusing because of the "excessive" use of ternary operator to check if e-mail
-    // belongs to the sent mailbox or not, to create the Archive button or not
     card_div.innerHTML = `
     <div class="card-header">
       ${email.subject}
     </div>
-    <div class="card-body">
+    <div id="email_card" class="card-body">
       <p class="card-text"><strong>From: </strong>${email.sender}</p>
       <p class="card-text"><small class="text-muted">${email.timestamp}</small></p>
       <p class="card-text"><strong>To: </strong>${email.recipients}</p>
       <hr>
-      <p class="card-text">${email.body}</p>`
-        + (mailbox === 'sent' ? 
-    `</div>`
-        : (email.archive ? 
-    ` <a href="#" id="unarchive-btn" class="btn btn-outline-warning">Unarchive</a>
-    </div>
-    `   : 
-    ` <a href="#" id="archive-btn" class="btn btn-outline-warning">Archive</a>
-    </div>`
-        ));
+      <p class="card-text">${email.body}</p>
+    </div>`;
     
     document.querySelector('#email-view').append(card_div);
+    
+    // Creating archive e reply button elements to be appended to the e-mail created
+    // let archive_unarchive_btn = '';
+    // Creating Archive buttons or not
+    if (mailbox != 'sent')
+    {
+      let archive_unarchive_btn = document.createElement('a');
+      archive_unarchive_btn.innerHTML = email.archived ? 'Unarchive' : 'Archive';
+      archive_unarchive_btn.id = email.archived ? 'unarchive-btn' : 'archive-btn';
+      archive_unarchive_btn.className = 'btn btn-outline-warning';
+      archive_unarchive_btn.href = '#';
+      
+      // Add and event listener to it
+      archive_unarchive_btn.addEventListener('click', function() {
+        fetch(`/emails/${email_id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+              archived: email.archived ? false : true // if email is archived then we want to unarchive and vice-versa
+          })
+        })
+        .then(() => {
+          // Go to the inbox
+          load_mailbox('inbox');
+        });
+      });
 
-    // Adding event listener to Archive button
+      // And append to the e-mail 
+      document.getElementById('email_card').append(archive_unarchive_btn);
+    }
   });
 }
