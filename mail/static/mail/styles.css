@@ -10,3 +10,7 @@ h2, h3 {
 textarea {
     min-height: 400px;
 }
+
+#reply_btn {
+    margin-right: 2%;
+}

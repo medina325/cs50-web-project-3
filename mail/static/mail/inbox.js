@@ -4,23 +4,34 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#inbox').addEventListener('click', () => load_mailbox('inbox'));
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
-  document.querySelector('#compose').addEventListener('click', compose_email);
+  
+  document.querySelector('#compose')
+  .addEventListener('click', () => compose_email({
+    "recipients": '',
+    "subject": '',
+    "body": '',
+  }));
 
   // By default, load the inbox
   load_mailbox('inbox');
 });
 
-function compose_email() {
+function compose_email(email_filling) {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
   document.querySelector('#compose-view').style.display = 'block';
   document.querySelector('#email-view').style.display = 'none';
 
+  // Putting those elements in variables because they are gonna be used later on
+  let recipients_div = document.querySelector('#compose-recipients');
+  let subject_div = document.querySelector('#compose-subject');
+  let body_div = document.querySelector('#compose-body');
+
   // Clear out composition fields
-  document.querySelector('#compose-recipients').value = '';
-  document.querySelector('#compose-subject').value = '';
-  document.querySelector('#compose-body').value = '';
+  recipients_div.value = email_filling.recipients;
+  subject_div.value = email_filling.subject;
+  body_div.value = email_filling.body;
 
   // If the submit button is hit, then sends the e-mail
   document.querySelector('#compose-form').onsubmit = () => {
@@ -30,21 +41,19 @@ function compose_email() {
     fetch('/emails', {
       method: 'POST',
       body: JSON.stringify({
-          recipients: document.querySelector('#compose-recipients').value,
-          subject: document.querySelector('#compose-subject').value,
-          body: document.querySelector('#compose-body').value
+          recipients: recipients_div.value,
+          subject: subject_div.value,
+          body: body_div.value
       })
     })
     .then(response => response.json())
     .then(result => {
       console.log(result);
+      load_mailbox('sent');
     });
-
-    load_mailbox('sent');
 
     return false;
   };
-  
 }
 
 function load_mailbox(mailbox) {
@@ -75,7 +84,17 @@ function load_mailbox(mailbox) {
       const a = document.createElement('a');
       a.href = '#';
       a.addEventListener('click', () => {
-        load_email(email.id, mailbox);
+        // It marks the given e-mail as 'read' if it's the first it's being open
+        fetch(`/emails/${email.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            read: true
+          })
+        })
+        .then(() => {
+          load_email(email.id, mailbox);
+        });
+        
       });
 
       if(email.read === false)
@@ -109,15 +128,7 @@ function load_mailbox(mailbox) {
 }
 
 function load_email(email_id, mailbox) {
-  // First, it marks the given e-mail as 'read'
-  fetch(`/emails/${email_id}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-        read: true
-    })
-  });
-
-  // Next, clean any mail that is appended to the 'email-view' div
+  // First, clean any mail that is appended to the 'email-view' div
   if(document.querySelector('.card') != null)
     document.querySelector('.card').remove();
 
@@ -128,7 +139,6 @@ function load_email(email_id, mailbox) {
   fetch(`/emails/${email_id}`)
   .then(response => response.json())
   .then(email => {
-    
     // Creating card that is gonna contain the e-mail
     const card_div = document.createElement('div');
     card_div.className = 'card';
@@ -140,8 +150,8 @@ function load_email(email_id, mailbox) {
     </div>
     <div id="email_card" class="card-body">
       <p class="card-text"><strong>From: </strong>${email.sender}</p>
-      <p class="card-text"><small class="text-muted">${email.timestamp}</small></p>
       <p class="card-text"><strong>To: </strong>${email.recipients}</p>
+      <p class="card-text"><small class="text-muted">${email.timestamp}</small></p>
       <hr>
       <p class="card-text">${email.body}</p>
     </div>`;
@@ -149,32 +159,45 @@ function load_email(email_id, mailbox) {
     document.querySelector('#email-view').append(card_div);
     
     // Creating archive e reply button elements to be appended to the e-mail created
-    // let archive_unarchive_btn = '';
-    // Creating Archive buttons or not
     if (mailbox != 'sent')
     {
+      // Creating archive button
       let archive_unarchive_btn = document.createElement('a');
       archive_unarchive_btn.innerHTML = email.archived ? 'Unarchive' : 'Archive';
-      archive_unarchive_btn.id = email.archived ? 'unarchive-btn' : 'archive-btn';
       archive_unarchive_btn.className = 'btn btn-outline-warning';
       archive_unarchive_btn.href = '#';
       
-      // Add and event listener to it
+      // And adding a click event listener to it
       archive_unarchive_btn.addEventListener('click', function() {
         fetch(`/emails/${email_id}`, {
           method: 'PUT',
           body: JSON.stringify({
-              archived: email.archived ? false : true // if email is archived then we want to unarchive and vice-versa
+              // if the e-mail is archived then we want to unarchive and vice-versa
+              archived: email.archived ? false : true 
           })
         })
         .then(() => {
-          // Go to the inbox
-          load_mailbox('inbox');
+          load_mailbox('inbox'); // Go to the inbox
         });
       });
 
-      // And append to the e-mail 
-      document.getElementById('email_card').append(archive_unarchive_btn);
+      // Creating reply button
+      let reply_btn = document.createElement('a');
+      reply_btn.innerHTML = 'Reply';
+      reply_btn.className = 'btn btn-outline-success';
+      reply_btn.id = 'reply_btn';
+      reply_btn.href = '#';
+
+      reply_btn.addEventListener('click', () => compose_email({
+        "recipients": email.sender,
+        "subject": `Re: ${email.subject}`, // adicionar Re: 
+        "body": `On ${email.timestamp} ${email.user} wrote: ${email.body}`,
+      }));
+
+      // And append the buttons to the e-mail
+      let email_card_div = document.getElementById('email_card');
+      email_card_div.append(reply_btn);
+      email_card_div.append(archive_unarchive_btn);
     }
   });
 }
