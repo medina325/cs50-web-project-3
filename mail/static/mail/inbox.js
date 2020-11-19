@@ -28,7 +28,7 @@ function compose_email(email_filling) {
   let subject_div = document.querySelector('#compose-subject');
   let body_div = document.querySelector('#compose-body');
 
-  // Clear out composition fields
+  // Clear out composition fields or fill up with content for a reply
   recipients_div.value = email_filling.recipients;
   subject_div.value = email_filling.subject;
   body_div.value = email_filling.body;
@@ -70,15 +70,9 @@ function load_mailbox(mailbox) {
   fetch(`/emails/${mailbox}`)
   .then(response => response.json())
   .then(emails => {
-    console.log(emails);
-    
+
     const ul = document.createElement('ul');
     ul.className = 'list-group';
-
-    // const header_div = document.createElement('div');
-    // header_div.className = 'list-group-item';
-    // header_div.innerHTML = '<div class="container"><div class="row"><div class="col"><div class="d-flex justify-content-center">Sender</div></div><div class="col"><div class="d-flex justify-content-center">Subject</div></div><div class="col"><div class="d-flex justify-content-center">Date</div></div></div></div>';
-    // ul.append(header_div);
 
     emails.forEach((email) => {
       const a = document.createElement('a');
@@ -106,7 +100,7 @@ function load_mailbox(mailbox) {
       <div class="container">
         <div class="row">
           <div class="col">
-            ${email.sender}
+            <strong>${email.sender}</strong>
           </div>
           <div class="col">
             <div class="d-flex justify-content-center">
@@ -190,8 +184,9 @@ function load_email(email_id, mailbox) {
 
       reply_btn.addEventListener('click', () => compose_email({
         "recipients": email.sender,
-        "subject": `Re: ${email.subject}`, // adicionar Re: 
-        "body": `On ${email.timestamp} ${email.user} wrote: ${email.body}`,
+        "subject": email.subject.match(/(^Re:)+/) === null ? `Re: ${email.subject}` : `${email.subject}`, 
+        "reply_header": `On ${email.timestamp} ${email.user} wrote:\n\n`,
+        "body": email.body
       }));
 
       // And append the buttons to the e-mail

@@ -1,10 +1,14 @@
-body {
-    background: rgba(7, 0, 26, 0.8);
-    /* color: white; */
-}
-
 h2, h3 {
     color: rgb(250, 3, 250);
+}
+
+a {
+    color: rgba(0, 253, 0, 1);
+}
+
+a:hover {
+    color: rgb(250, 3, 250);
+    text-decoration: none;
 }
 
 textarea {
@@ -13,4 +17,12 @@ textarea {
 
 #reply_btn {
     margin-right: 2%;
+}
+
+#compose-body {
+    margin-bottom: 2%;
+}
+
+.list-group-item.list-group-item-action {
+    border: 1px solid rgba(100, 255, 100, 1);
 }
