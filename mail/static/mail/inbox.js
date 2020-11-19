@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     "recipients": '',
     "subject": '',
     "body": '',
+    "reply_flag": false
   }));
 
   // By default, load the inbox
@@ -24,14 +25,14 @@ function compose_email(email_filling) {
   document.querySelector('#email-view').style.display = 'none';
 
   // Putting those elements in variables because they are gonna be used later on
-  let recipients_div = document.querySelector('#compose-recipients');
-  let subject_div = document.querySelector('#compose-subject');
-  let body_div = document.querySelector('#compose-body');
+  let recipients_input = document.querySelector('#compose-recipients');
+  let subject_input = document.querySelector('#compose-subject');
+  let body_textarea = document.querySelector('#compose-body');
 
   // Clear out composition fields or fill up with content for a reply
-  recipients_div.value = email_filling.recipients;
-  subject_div.value = email_filling.subject;
-  body_div.value = email_filling.body;
+  recipients_input.value = email_filling.recipients;
+  subject_input.value = email_filling.subject;
+  body_textarea.value = email_filling.reply_flag ? `\n${email_filling.body}\n` : '';
 
   // If the submit button is hit, then sends the e-mail
   document.querySelector('#compose-form').onsubmit = () => {
@@ -41,9 +42,9 @@ function compose_email(email_filling) {
     fetch('/emails', {
       method: 'POST',
       body: JSON.stringify({
-          recipients: recipients_div.value,
-          subject: subject_div.value,
-          body: body_div.value
+          recipients: recipients_input.value,
+          subject: subject_input.value,
+          body: body_textarea.value
       })
     })
     .then(response => response.json())
@@ -185,8 +186,8 @@ function load_email(email_id, mailbox) {
       reply_btn.addEventListener('click', () => compose_email({
         "recipients": email.sender,
         "subject": email.subject.match(/(^Re:)+/) === null ? `Re: ${email.subject}` : `${email.subject}`, 
-        "reply_header": `On ${email.timestamp} ${email.user} wrote:\n\n`,
-        "body": email.body
+        "body": `---\nOn ${email.timestamp} ${email.sender} wrote:\n${email.body}`,
+        "reply_flag": true
       }));
 
       // And append the buttons to the e-mail
