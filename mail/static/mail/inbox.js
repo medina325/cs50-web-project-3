@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function compose_email(email_filling) {
+  // The parameter email_filling defines whats gonna be the pre-filled e-mail fields
+  // and also a flag that indicates if the e-mail being composed it's a reply or 
+  // a brand new e-mail
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
@@ -37,8 +40,9 @@ function compose_email(email_filling) {
   // If the submit button is hit, then sends the e-mail
   document.querySelector('#compose-form').onsubmit = () => {
 
-    // if the fetch is successful then the response variable is gonna contain the data returned from the API
-    // 'then' is gonna return that data in json format which will be in the result variable
+    // if the fetch is successful then the response variable is gonna contain the 
+    // data returned from the API. 'then' is gonna return that data in json format 
+    // which will be in the result variable (return message from the API)
     fetch('/emails', {
       method: 'POST',
       body: JSON.stringify({
@@ -49,7 +53,7 @@ function compose_email(email_filling) {
     })
     .then(response => response.json())
     .then(result => {
-      console.log(result);
+      console.log(result); // printing API message to console
       load_mailbox('sent');
     });
 
@@ -58,7 +62,6 @@ function compose_email(email_filling) {
 }
 
 function load_mailbox(mailbox) {
-  console.log(mailbox);
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
@@ -72,14 +75,14 @@ function load_mailbox(mailbox) {
   .then(response => response.json())
   .then(emails => {
 
-    const ul = document.createElement('ul');
+    let ul = document.createElement('ul');
     ul.className = 'list-group';
 
     emails.forEach((email) => {
-      const a = document.createElement('a');
+      let a = document.createElement('a');
       a.href = '#';
       a.addEventListener('click', () => {
-        // It marks the given e-mail as 'read' if it's the first it's being open
+        // It marks the given e-mail as 'read' if it's the first time it's being open
         fetch(`/emails/${email.id}`, {
           method: 'PUT',
           body: JSON.stringify({
@@ -89,13 +92,12 @@ function load_mailbox(mailbox) {
         .then(() => {
           load_email(email.id, mailbox);
         });
-        
       });
 
       if(email.read === false)
         a.className = 'list-group-item list-group-item-action';
       else
-        a.className = 'list-group-item list-group-item-action list-group-item-dark';
+        a.className = 'list-group-item list-group-item-action list-group-item-secondary';
 
       a.innerHTML = `
       <div class="container">
@@ -138,7 +140,8 @@ function load_email(email_id, mailbox) {
     const card_div = document.createElement('div');
     card_div.className = 'card';
 
-    // Creating e-mail that belong to either received or archived mailbox
+    // Creating e-mail
+    // Notice that the body has it's '\n' replaced by <br> since it's html
     card_div.innerHTML = `
     <div class="card-header">
       ${email.subject}
@@ -148,7 +151,7 @@ function load_email(email_id, mailbox) {
       <p class="card-text"><strong>To: </strong>${email.recipients}</p>
       <p class="card-text"><small class="text-muted">${email.timestamp}</small></p>
       <hr>
-      <p class="card-text">${email.body}</p>
+      <p class="card-text">${email.body.replace(/\n/g, '<br>')}</p>
     </div>`;
     
     document.querySelector('#email-view').append(card_div);
@@ -190,7 +193,7 @@ function load_email(email_id, mailbox) {
         "reply_flag": true
       }));
 
-      // And append the buttons to the e-mail
+      // Appending the buttons to the e-mail
       let email_card_div = document.getElementById('email_card');
       email_card_div.append(reply_btn);
       email_card_div.append(archive_unarchive_btn);
