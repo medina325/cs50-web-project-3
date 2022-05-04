@@ -4,13 +4,11 @@
 - [Description](#description)
 - [Requirements](#requirements)
 - [How to Run](#how-to-run)
-- [Submit Version](#submit-version-result)
-    - [Active Listings Page](#active-listings-page)
-    - [Create Listing Page](#create-listing-page)
-    - [Listing Page](#listing-page)
-    - [Watchlist Page](#watchlist-page)
-    - [My Listings](#my-listings)
-    - [Won Listings](#won-listings)
+- [Submit Version](#submit-version)
+    - [Inbox Page](#inbox-page)
+    - [Compose Listing Page](#compose-page)
+    - [Sent Page](#sent-page)
+    - [Archive Page](#archive-page)
 
 ## Description
 Design a front-end for an email client that makes API calls to send and receive emails.
